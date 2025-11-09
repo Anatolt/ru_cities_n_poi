@@ -93,8 +93,11 @@
     }).join('');
 
     app.innerHTML = `
-      <h1 class="page-title">Регионы</h1>
-      <div class="cards">${items || '<div class="not-found">Регионы не найдены</div>'}</div>
+      <div class="home-wrapper">
+        <span class="version">v 0.3</span>
+        <h1 class="page-title">Регионы</h1>
+        <div class="cards">${items || '<div class="not-found">Регионы не найдены</div>'}</div>
+      </div>
     `;
   }
 

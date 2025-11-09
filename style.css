@@ -51,6 +51,21 @@ body{
     padding:0 16px;
 }
 
+/* Обёртка для главной страницы */
+.home-wrapper{
+    position:relative;
+}
+
+/* Версия в углу */
+.version{
+    position:absolute;
+    top:0;
+    right:0;
+    font-size:0.85rem;
+    color:var(--muted);
+    font-weight:500;
+}
+
 /* Заголовки страницы */
 .page-title{
     margin:0 0 12px 0;
