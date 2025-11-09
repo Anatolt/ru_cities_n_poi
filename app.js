@@ -54,28 +54,35 @@
 
   // Найти регион по слагу
   function findRegion(data, regionSlug) {
-    if (!data || !Array.isArray(data.regions)) return null;
-    return data.regions.find(r => getSlug(r) === regionSlug || String(r.slug) === regionSlug) || null;
+    if (!data || !Array.isArray(data)) return null;
+    return data.find(r => {
+      const regionName = r.region || r.name || r.title || '';
+      return getSlug({name: regionName}) === regionSlug || String(r.slug) === regionSlug;
+    }) || null;
   }
 
   // Найти город по слагу внутри региона
   function findCity(region, citySlug) {
     if (!region || !Array.isArray(region.cities)) return null;
-    return region.cities.find(c => getSlug(c) === citySlug || String(c.slug) === citySlug) || null;
+    return region.cities.find(c => {
+      const cityName = c.city || c.name || c.title || '';
+      return getSlug({name: cityName}) === citySlug || String(c.slug) === citySlug;
+    }) || null;
   }
 
   // Найти достопримечательность по слагу внутри города
   function findAttraction(city, attrSlug) {
-    if (!city || !Array.isArray(city.attractions)) return null;
-    return city.attractions.find(a => getSlug(a) === attrSlug || String(a.slug) === attrSlug) || null;
+    if (!city || !Array.isArray(city.landmarks)) return null;
+    return city.landmarks.find(a => getSlug(a) === attrSlug || String(a.slug) === attrSlug) || null;
   }
 
   // Рендер главной страницы: список регионов
   function renderHome(data) {
-    const regions = Array.isArray(data.regions) ? data.regions : [];
+    const regions = Array.isArray(data) ? data : [];
     const items = regions.map(r => {
-      const slug = getSlug(r);
-      const name = escapeHtml(r.name || r.title || 'Без названия');
+      const regionName = r.region || r.name || r.title || 'Без названия';
+      const slug = getSlug({name: regionName});
+      const name = escapeHtml(regionName);
       const desc = r.description ? `<p class="meta">${escapeHtml(r.description)}</p>` : '';
       return `
         <article class="card">
@@ -99,10 +106,12 @@
       return;
     }
     const cities = Array.isArray(region.cities) ? region.cities : [];
+    const regionName = region.region || region.name || region.title || regionSlug;
 
     const items = cities.map(c => {
-      const cslug = getSlug(c);
-      const name = escapeHtml(c.name || c.title || 'Без названия');
+      const cityName = c.city || c.name || c.title || 'Без названия';
+      const cslug = getSlug({name: cityName});
+      const name = escapeHtml(cityName);
       const desc = c.description ? `<p class="meta">${escapeHtml(c.description)}</p>` : '';
       return `
         <article class="card">
@@ -114,9 +123,9 @@
 
     app.innerHTML = `
       <div class="breadcrumbs">
-        <a class="link" href="#/">Регионы</a> › <span>${escapeHtml(region.name || region.title || regionSlug)}</span>
+        <a class="link" href="#/">Регионы</a> › <span>${escapeHtml(regionName)}</span>
       </div>
-      <h1 class="page-title">Города — ${escapeHtml(region.name || region.title || '')}</h1>
+      <h1 class="page-title">Города — ${escapeHtml(regionName)}</h1>
       <div class="cards">${items || '<div class="not-found">Города не найдены</div>'}</div>
     `;
   }
@@ -128,7 +137,9 @@
     const city = findCity(region, citySlug);
     if (!city) { renderNotFound(); return; }
 
-    const attractions = Array.isArray(city.attractions) ? city.attractions : [];
+    const attractions = Array.isArray(city.landmarks) ? city.landmarks : [];
+    const regionName = region.region || region.name || region.title || regionSlug;
+    const cityName = city.city || city.name || city.title || citySlug;
 
     const items = attractions.map(a => {
       const aslug = getSlug(a);
@@ -145,10 +156,10 @@
     app.innerHTML = `
       <div class="breadcrumbs">
         <a class="link" href="#/">Регионы</a> › 
-        <a class="link" href="#/region/${encodeURIComponent(regionSlug)}">${escapeHtml(region.name || region.title || regionSlug)}</a> › 
-        <span>${escapeHtml(city.name || city.title || citySlug)}</span>
+        <a class="link" href="#/region/${encodeURIComponent(regionSlug)}">${escapeHtml(regionName)}</a> › 
+        <span>${escapeHtml(cityName)}</span>
       </div>
-      <h1 class="page-title">Достопримечательности — ${escapeHtml(city.name || city.title || '')}</h1>
+      <h1 class="page-title">Достопримечательности — ${escapeHtml(cityName)}</h1>
       <div class="cards">${items || '<div class="not-found">Достопримечательности не найдены</div>'}</div>
     `;
   }
@@ -165,6 +176,8 @@
 
     const title = escapeHtml(attraction.name || attraction.title || attrSlug);
     const desc = attraction.description ? `<p>${escapeHtml(attraction.description)}</p>` : '<p class="meta">Описание отсутствует.</p>';
+    const regionName = region.region || region.name || region.title || regionSlug;
+    const cityName = city.city || city.name || city.title || citySlug;
 
     // Ищем возможный список одежды / мерча в известных полях
     const merchArray =
@@ -200,8 +213,8 @@
     app.innerHTML = `
       <div class="breadcrumbs">
         <a class="link" href="#/">Регионы</a> › 
-        <a class="link" href="#/region/${encodeURIComponent(regionSlug)}">${escapeHtml(region.name || region.title || regionSlug)}</a> › 
-        <a class="link" href="#/region/${encodeURIComponent(regionSlug)}/${encodeURIComponent(citySlug)}">${escapeHtml(city.name || city.title || citySlug)}</a> › 
+        <a class="link" href="#/region/${encodeURIComponent(regionSlug)}">${escapeHtml(regionName)}</a> › 
+        <a class="link" href="#/region/${encodeURIComponent(regionSlug)}/${encodeURIComponent(citySlug)}">${escapeHtml(cityName)}</a> › 
         <span>${title}</span>
       </div>
 
