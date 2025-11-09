@@ -99,9 +99,12 @@
         <div class="cards">${items || '<div class="not-found">Регионы не найдены</div>'}</div>
       </div>
     `;
+    
+    // Обновляем title страницы
+    document.title = 'Регионы и достопримечательности';
   }
 
-  // Рендер страницы региона: список городов региона
+  // Рендер страницы региона: список городов региона и их достопримечательностей
   function renderRegion(data, regionSlug) {
     const region = findRegion(data, regionSlug);
     if (!region) {
@@ -116,10 +119,28 @@
       const cslug = getSlug({name: cityName});
       const name = escapeHtml(cityName);
       const desc = c.description ? `<p class="meta">${escapeHtml(c.description)}</p>` : '';
+      
+      // Выводим достопримечательности внутри города
+      const landmarks = Array.isArray(c.landmarks) ? c.landmarks : [];
+      const landmarksHtml = landmarks.map(a => {
+        const aslug = getSlug(a);
+        const aName = escapeHtml(a.name || a.title || 'Без названия');
+        const aDesc = a.description ? `<p class="meta">${escapeHtml(a.description)}</p>` : '';
+        return `
+          <div class="landmark-item">
+            <h4><a class="link" href="#/region/${encodeURIComponent(regionSlug)}/${encodeURIComponent(cslug)}/${aslug}">${aName}</a></h4>
+            ${aDesc}
+          </div>
+        `;
+      }).join('');
+      
+      const landmarksSection = landmarksHtml ? `<div class="landmarks-list">${landmarksHtml}</div>` : '';
+      
       return `
         <article class="card">
           <h3><a class="link" href="#/region/${encodeURIComponent(regionSlug)}/${cslug}">${name}</a></h3>
           ${desc}
+          ${landmarksSection}
         </article>
       `;
     }).join('');
@@ -131,6 +152,9 @@
       <h1 class="page-title">Города — ${escapeHtml(regionName)}</h1>
       <div class="cards">${items || '<div class="not-found">Города не найдены</div>'}</div>
     `;
+    
+    // Обновляем title страницы
+    document.title = `${escapeHtml(regionName)} — Регионы и достопримечательности`;
   }
 
   // Рендер страницы города: список достопримечательностей
@@ -165,6 +189,9 @@
       <h1 class="page-title">Достопримечательности — ${escapeHtml(cityName)}</h1>
       <div class="cards">${items || '<div class="not-found">Достопримечательности не найдены</div>'}</div>
     `;
+    
+    // Обновляем title страницы
+    document.title = `${escapeHtml(cityName)} — ${escapeHtml(regionName)} — Регионы и достопримечательности`;
   }
 
   // Рендер отдельной достопримечательности
@@ -227,6 +254,9 @@
         ${merchHtml}
       </article>
     `;
+    
+    // Обновляем title страницы
+    document.title = `${title} — ${escapeHtml(cityName)} — Регионы и достопримечательности`;
   }
 
   // Показывает универсальную страницу "не найдено"
@@ -238,6 +268,9 @@
         <p><a class="link" href="#/">Вернуться на главную</a></p>
       </div>
     `;
+    
+    // Обновляем title страницы
+    document.title = 'Страница не найдена — Регионы и достопримечательности';
   }
 
   // Главный роутер: парсит location.hash и вызывает соответствующий рендер
