@@ -45,11 +45,12 @@
   }
 
   // Получить "slug" элемента: предпочитаем поле slug, иначе генерируем
+  // Возвращает НЕ закодированный slug (кодирование делается при вставке в URL)
   function getSlug(item) {
     if (!item) return '';
     if (item.slug) return String(item.slug);
-    // Простейшая генерация: латинские символы не обязательны — используем encodeURIComponent по имени
-    return encodeURIComponent(String(item.name || item.title || '').toLowerCase().replace(/\s+/g, '-'));
+    // Простейшая генерация: нормализуем имя в slug (без кодирования)
+    return String(item.name || item.title || '').toLowerCase().replace(/\s+/g, '-');
   }
 
   // Найти регион по слагу
@@ -73,20 +74,9 @@
   // Найти достопримечательность по слагу внутри города
   function findAttraction(city, attrSlug) {
     if (!city || !Array.isArray(city.landmarks)) return null;
-    // Безопасное декодирование для нормализации сравнения
-    const safeDecode = (str) => {
-      if (!str) return '';
-      try {
-        return decodeURIComponent(str);
-      } catch (e) {
-        return str;
-      }
-    };
-    const normalizedAttrSlug = safeDecode(attrSlug);
     return city.landmarks.find(a => {
       const aSlug = getSlug(a);
-      const normalizedASlug = safeDecode(aSlug);
-      return normalizedASlug === normalizedAttrSlug || aSlug === attrSlug || String(a.slug) === attrSlug || safeDecode(String(a.slug || '')) === normalizedAttrSlug;
+      return aSlug === attrSlug || String(a.slug) === attrSlug;
     }) || null;
   }
 
@@ -100,7 +90,7 @@
       const desc = r.description ? `<p class="meta">${escapeHtml(r.description)}</p>` : '';
       return `
         <article class="card">
-          <h3><a class="link" href="#/region/${slug}">${name}</a></h3>
+          <h3><a class="link" href="#/region/${encodeURIComponent(slug)}">${name}</a></h3>
           ${desc}
         </article>
       `;
@@ -108,7 +98,7 @@
 
     app.innerHTML = `
       <div class="home-wrapper">
-        <span class="version">v 0.5</span>
+        <span class="version">v 0.6</span>
         <h1 class="page-title">Регионы</h1>
         <div class="cards">${items || '<div class="not-found">Регионы не найдены</div>'}</div>
       </div>
@@ -140,10 +130,9 @@
         const aslug = getSlug(a);
         const aName = escapeHtml(a.name || a.title || 'Без названия');
         const aDesc = a.description ? `<p class="meta">${escapeHtml(a.description)}</p>` : '';
-        // getSlug уже возвращает закодированный slug, поэтому не кодируем повторно
         return `
           <div class="landmark-item">
-            <h4><a class="link" href="#/region/${encodeURIComponent(regionSlug)}/${encodeURIComponent(cslug)}/${aslug}">${aName}</a></h4>
+            <h4><a class="link" href="#/region/${encodeURIComponent(regionSlug)}/${encodeURIComponent(cslug)}/${encodeURIComponent(aslug)}">${aName}</a></h4>
             ${aDesc}
           </div>
         `;
@@ -153,7 +142,7 @@
       
       return `
         <article class="card">
-          <h3><a class="link" href="#/region/${encodeURIComponent(regionSlug)}/${cslug}">${name}</a></h3>
+          <h3><a class="link" href="#/region/${encodeURIComponent(regionSlug)}/${encodeURIComponent(cslug)}">${name}</a></h3>
           ${desc}
           ${landmarksSection}
         </article>
@@ -187,10 +176,9 @@
       const aslug = getSlug(a);
       const name = escapeHtml(a.name || a.title || 'Без названия');
       const desc = a.description ? `<p class="meta">${escapeHtml(a.description)}</p>` : '';
-      // getSlug уже возвращает закодированный slug, поэтому не кодируем повторно
       return `
         <article class="card">
-          <h3><a class="link" href="#/region/${encodeURIComponent(regionSlug)}/${encodeURIComponent(citySlug)}/${aslug}">${name}</a></h3>
+          <h3><a class="link" href="#/region/${encodeURIComponent(regionSlug)}/${encodeURIComponent(citySlug)}/${encodeURIComponent(aslug)}">${name}</a></h3>
           ${desc}
         </article>
       `;
