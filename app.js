@@ -73,7 +73,21 @@
   // Найти достопримечательность по слагу внутри города
   function findAttraction(city, attrSlug) {
     if (!city || !Array.isArray(city.landmarks)) return null;
-    return city.landmarks.find(a => getSlug(a) === attrSlug || String(a.slug) === attrSlug) || null;
+    // Безопасное декодирование для нормализации сравнения
+    const safeDecode = (str) => {
+      if (!str) return '';
+      try {
+        return decodeURIComponent(str);
+      } catch (e) {
+        return str;
+      }
+    };
+    const normalizedAttrSlug = safeDecode(attrSlug);
+    return city.landmarks.find(a => {
+      const aSlug = getSlug(a);
+      const normalizedASlug = safeDecode(aSlug);
+      return normalizedASlug === normalizedAttrSlug || aSlug === attrSlug || String(a.slug) === attrSlug || safeDecode(String(a.slug || '')) === normalizedAttrSlug;
+    }) || null;
   }
 
   // Рендер главной страницы: список регионов
@@ -94,7 +108,7 @@
 
     app.innerHTML = `
       <div class="home-wrapper">
-        <span class="version">v 0.3</span>
+        <span class="version">v 0.5</span>
         <h1 class="page-title">Регионы</h1>
         <div class="cards">${items || '<div class="not-found">Регионы не найдены</div>'}</div>
       </div>
@@ -126,6 +140,7 @@
         const aslug = getSlug(a);
         const aName = escapeHtml(a.name || a.title || 'Без названия');
         const aDesc = a.description ? `<p class="meta">${escapeHtml(a.description)}</p>` : '';
+        // getSlug уже возвращает закодированный slug, поэтому не кодируем повторно
         return `
           <div class="landmark-item">
             <h4><a class="link" href="#/region/${encodeURIComponent(regionSlug)}/${encodeURIComponent(cslug)}/${aslug}">${aName}</a></h4>
@@ -172,6 +187,7 @@
       const aslug = getSlug(a);
       const name = escapeHtml(a.name || a.title || 'Без названия');
       const desc = a.description ? `<p class="meta">${escapeHtml(a.description)}</p>` : '';
+      // getSlug уже возвращает закодированный slug, поэтому не кодируем повторно
       return `
         <article class="card">
           <h3><a class="link" href="#/region/${encodeURIComponent(regionSlug)}/${encodeURIComponent(citySlug)}/${aslug}">${name}</a></h3>
@@ -290,9 +306,19 @@
     }
 
     if (parts[0] === 'region') {
-      const regionSlug = parts[1] ? parts[1] : null;
-      const citySlug = parts[2] ? parts[2] : null;
-      const attrSlug = parts[3] ? parts[3] : null;
+      // Безопасное декодирование: если декодирование не удалось, используем исходное значение
+      const safeDecode = (str) => {
+        if (!str) return null;
+        try {
+          return decodeURIComponent(str);
+        } catch (e) {
+          return str; // Если уже не закодировано или ошибка декодирования
+        }
+      };
+      
+      const regionSlug = safeDecode(parts[1]);
+      const citySlug = safeDecode(parts[2]);
+      const attrSlug = safeDecode(parts[3]);
 
       if (!regionSlug) { renderNotFound(); return; }
 
